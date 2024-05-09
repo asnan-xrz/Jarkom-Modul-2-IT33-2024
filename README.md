@@ -587,3 +587,196 @@ Akhirnya lakukan restart pada Georgopol `service bind9 restart`
 Karena pusat ingin sebuah website yang ingin digunakan untuk memantau kondisi markas lainnya maka deploy lah webiste ini (cek resource yg lb) pada severny menggunakan apache
 
 **Jawaban Nomor 12**
+Langkah pertama untuk mengerjakan soal ini adalah menambahkan `nameserver 10.80.2.4 #IP Severny` dengan mengetikkan `nano /etc/resolv.conf` pada Pochinki dan Georgopol
+
+Kemudian kita harus menginstall lynx pada GatkaTrenches dan GatkaRadio. Ketikkan command `apt-get update` dan `apt-get install lynx -y`
+
+Selanjutnya pada Severny, ketikkan command `nano severny.sh` dan gunakan konfigurasi sebagai berikut:
+
+```bash
+#!/bin/bash
+
+    apt-get update
+    apt-get install apache2 -y
+    apt-get install libapache2-mod-php7.0 -y
+
+    apt-get update
+    apt-get install unzip -y
+
+    apt-get update
+    apt-get install php -y
+
+curl -L -o lb.zip --insecure "https://drive.google.com/uc?export=download&id=1xn03kTB27K872cokqwEIlk8Zb121HnfB"
+
+unzip lb.zip
+
+rm -rf /var/www/html/index.php
+
+cp worker/index.php /var/www/html/index.php
+
+service apache2 restart
+```
+
+Seperti biasa jalankan command `chmod +x severny.sh` dan `./severny.sh`
+
+### **SOAL 13**
+Tapi pusat merasa tidak puas dengan performanya karena traffic yag tinggi maka pusat meminta kita memasang load balancer pada web nya, dengan Severny, Stalber, Lipovka sebagai worker dan Mylta sebagai Load Balancer menggunakan apache sebagai web server nya dan load balancernya
+
+**Jawaban Nomor 13**
+Tambahkan IP Mylta pada server Pochinki dan Georgopol dengan mengetikkan `nano /etc/resolv.conf` dan `nameserver 10.80.2.3  #IP Mylta`
+
+Lalu pada Stalber dan Lipovka kita harus membuat konfigruasi loadbalance (`nano loadbalance.sh`) sebagai berikut:
+
+```bash
+#!/bin/bash
+
+    apt-get update
+    apt-get install apache2 -y
+    apt-get install libapache2-mod-php7.0 -y
+
+    apt-get update
+    apt-get install unzip -y
+
+    apt-get update
+    apt-get install php -y
+
+curl -L -o lb.zip --insecure "https://drive.google.com/uc?export=download&id=1xn03kTB27K872cokqwEIlk8Zb121HnfB"
+
+unzip lb.zip
+
+rm -rf /var/www/html/index.php
+
+cp worker/index.php /var/www/html/index.php
+
+service apache2 restart
+```
+
+Jangan lupa `chmod +x loadbalance.sh` dan `./loadbalance.sh`
+
+Selanjutnya pada server Mylta juga harus dikonfirugarasikan load balance nya (`nano loadbalanceMylta.sh`)
+
+```bash
+#!/bin/bash
+
+    apt-get update
+    apt-get install apache2 -y
+    apt-get install libapache2-mod-php7.0 -y
+
+    apt-get update
+    apt-get install php -y
+
+a2enmod proxy_balancer
+a2enmod proxy_http
+a2enmod lbmethod_byrequests
+cat <<EOF > /etc/apache2/sites-available/000-default.conf
+<VirtualHost *:80>
+    <Proxy balancer://serverpool>
+        BalancerMember http://10.80.2.2/	# IP Stalber
+        BalancerMember http://10.80.2.4/	# IP Severny
+        BalancerMember http://10.80.2.5/	# IP Lipovka
+        Proxyset lbmethod=byrequests
+    </Proxy>
+    ProxyPass / balancer://serverpool/
+    ProxyPassReverse / balancer://serverpool/
+</VirtualHost>
+EOF
+
+service apache2 restart
+```
+
+Tidak lupa `chmod +x loadbalanceMylta.sh` dan `./loadbalanceMylta.sh`
+
+### **SOAL 14**
+Mereka juga belum merasa puas jadi pusat meminta agar web servernya dan load balancer nya diubah menjadi nginx
+
+**Jawaban Nomor 14**
+Terlebih dahulu lakukan stop service apache yang berjalan di web server dan load balancer.
+
+Lalu install Nginx `apt-get update` `apt-get install nginx`
+
+kemudian masukkan konfigurasi
+
+```
+http {
+  upstream jarkom_backend {
+      zone upstream;
+      server 10.80.2.4; # IP Severny
+      server 10.80.2.2; # IP Stalber
+  }
+}
+
+server {
+  listen 80;
+  name_server mylta.it33.com www.mylta.it33.com;
+
+  location / {
+      proxy_pass http://jarkom_backend;
+  }
+}
+```
+
+lakukan simlink file di sites-available dengan sites-enabled
+
+```
+" > /etc/nginx/sites-available/jarkom
+
+  ln -s /etc/nginx/sites-available/jarkom /etc/nginx/sites-enabled/jarkom
+```
+
+hapus default agar tidak menabrak konfigurasi yang sudah dibuat sebelumnya
+
+```
+rm /etc/nginx/sites-enabled/default
+```
+
+Restart nginx `service nginx restart`
+
+Untuk severny, stalber, dan lipovka lakukan penginstalan Nginx
+
+Install `apt install php php-fpm php-mysql -y`
+
+buat folder untuk jarkom
+
+```
+mkdir /var/www/jarkom
+cp /root/lb/worker/index.php /var/www/jarkom/index.php
+```
+
+Jalankan ```service php7.2-fpm``` = ```service php7.0-fpm start```
+
+Selanjutnya input konfigurasi ke dalam ```/etc/nginx/sites-available/jarkom```
+  ```
+  echo -e "server {
+        listen 80;
+
+        root /var/www/jarkom;
+        index index.php index.html index.htm index.nginx-debian.html;
+
+        name-server;
+
+        location / {
+                try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+                fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+          }" > /etc/nginx/sites-available/jarkom
+  ```
+
+Akhirnya lakukan simlink file, delete file default dan restart Nginx 
+
+  ```
+  ln -s /etc/nginx/sites-available/jarkom /etc/nginx/sites-enabled/jarkom
+
+  rm /etc/nginx/sites-enabled/default
+
+  service nginx restart
+  ```
+
+Lakukan konfigurasi ini pada semua worker
