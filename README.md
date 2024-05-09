@@ -508,3 +508,82 @@ service bind9 restart
 Ketik command `chmod +x soal9Geo.sh` dan `./soal9Geo.sh`
 
 Layaknya sebelumnya, buka `named.conf.options` dengan command `/etc/bind/named.conf.options` pada Georgopol. Kemudian comment dnssec-validation auto; dan tambahkan baris berikut pada /etc/bind/named.conf.options. `  allow-query{any;};`
+
+### **SOAL 10**
+Markas juga meminta catatan kapan saja pesawat tempur tersebut menjatuhkan bom, maka buatlah subdomain baru di subdomain siren yaitu log.siren.redzone.xxxx.com serta aliasnya www.log.siren.redzone.xxxx.com yang juga mengarah ke Severny
+
+**Jawaban Nomor 10**
+Untuk kali ini, kita hanya perlu menambahkan subdomain `log.siren.redzone.it33.com` pada server Georgopol. Ketik `nano soal10.sh` dan masukan konfigurasi berikut:
+
+```bash
+#!/bin/bash
+
+cat << EOL > /etc/bind/siren/siren.redzone.it33.com
+;
+; BIND data file for local loopback interface
+;
+\$TTL    604800
+@       IN      SOA     siren.redzone.it33.com. siren.redzone.it33.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      siren.redzone.it33.com.
+@       IN      A       10.80.2.4     ; IP Severny
+www     IN      CNAME   siren.redzone.it33.com.
+log     IN      A       10.80.2.4     ; IP Severny
+www.log IN      CNAME   siren.redzone.it33.com.
+EOL
+
+service bind9 restart
+
+```
+
+lalu ketikkan `chmod +x soal10.sh` dan `./soal10.sh`
+
+### **SOAL 11**
+Setelah pertempuran mereda, warga Erangel dapat kembali mengakses jaringan luar, tetapi hanya warga Pochinki saja yang dapat mengakses jaringan luar secara langsung. Buatlah konfigurasi agar warga Erangel yang berada diluar Pochinki dapat mengakses jaringan luar melalui DNS Server Pochinki
+
+**Jawaban Nomor 11**
+Untuk pengerjaan soal ini, kita perlu melakukan pengeditan pada `/etc/bind/named.conf.options` pada server Pochinki. Lalu uncomment pada bagian berikut ini dan masukkan IP `192.168.122.1`
+
+```
+forwarders {
+      192.168.122.1;
+};
+```
+
+Kemudian comment pada bagian berikut ini:
+
+```
+// dnssec-validation auto;
+```
+
+Dan tambahkan
+
+```
+allow-query{any;};
+```
+
+Akhirnya lakukan restart pada Pochinki `service bind9 restart`
+
+Kemudian dengan cara yang sama, lakukan pengeditan file `/etc/bind/named.conf.options` pada server Georgopol. Berikut ini adalah konfigurasinya:
+
+```
+forwarders {
+      192.168.122.1;
+};
+
+// dnssec-validation auto;
+
+allow-query{any;};
+```
+
+Akhirnya lakukan restart pada Georgopol `service bind9 restart`
+
+### **SOAL 12**
+Karena pusat ingin sebuah website yang ingin digunakan untuk memantau kondisi markas lainnya maka deploy lah webiste ini (cek resource yg lb) pada severny menggunakan apache
+
+**Jawaban Nomor 12**
