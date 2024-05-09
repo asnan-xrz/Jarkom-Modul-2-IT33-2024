@@ -17,7 +17,7 @@ DNS Master akan diberi nama Pochinki, sesuai dengan kota tempat dibuatnya server
 
 Diperlukan topologi untuk pengerjaan soal tersebut. Berikut ini adalah topologi yang telah saya buat.
 
-
+![TOPOLOGI](https://github.com/asnan-xrz/Jarkom-Modul-2-IT33-2024/assets/133721836/426d4fcd-26f8-4e82-9266-0239d6159130)
 
 Agar semua node dapat terkonfigurasi internet, maka diperlukan konfigurasi network sebagai berikut:
 
@@ -133,7 +133,7 @@ Berikut ini adalah contoh dari salah satu node yang sudah berhasil terkoneksi ke
 ping google.com
 ```
 
-
+![CEK PING POCHINKI](https://github.com/asnan-xrz/Jarkom-Modul-2-IT33-2024/assets/133721836/cbc97a34-a012-4c53-9e41-f674fd0faaba)
 
 ### **SOAL 2**
 
@@ -272,6 +272,8 @@ nameserver 10.80.1.3  #IP Georgopol
 ```
 
 Berikut ini adalah bukti dari keberhasilan `ping airdrop.it33.com` `ping redzone.it33.com` `ping loot.it33.com` pada GatkaTrenches (sebelah kiri) dan GatkaRadio (sebelah kanan):
+
+![CEK PING DOMAIN GATKA](https://github.com/asnan-xrz/Jarkom-Modul-2-IT33-2024/assets/133721836/aade9e4a-e5c9-4a5f-9280-94cadacb3097)
 
 ### **SOAL 6**
 Beberapa daerah memiliki keterbatasan yang menyebabkan hanya dapat mengakses domain secara langsung melalui alamat IP domain tersebut. Karena daerah tersebut tidak diketahui secara spesifik, pastikan semua komputer (client) dapat mengakses domain redzone.xxxx.com melalui alamat IP Severny (Notes : menggunakan pointer record)
